@@ -1,8 +1,9 @@
 // Getting all required elements
 const inputField = document.querySelector(".input-field textarea"),
+  taskDateTimeInput = document.getElementById("taskDateTime"),
   todoLists = document.querySelector(".todoLists"),
-  pendingNum = document.querySelector(".pending-num"),
-  clearButton = document.querySelector(".clear-button");
+  pendingNum = document.querySelector(".pending-tasks .pending-num"), // Update the selector for pendingNum
+  clearButton = document.querySelector(".pending-tasks .clear-button"); // Update the selector for clearButton
 
 // We will call this function while adding, deleting, and checking-unchecking the task
 function allTasks() {
@@ -23,10 +24,20 @@ function allTasks() {
 
 // Function to show notification
 function showNotification(message) {
-  if (document.visibilityState !== "visible") {
-    Notification.requestPermission().then((permission) => {
+  if (Notification.permission === "granted" && document.visibilityState !== "visible") {
+    navigator.serviceWorker.getRegistration().then(function(reg) {
+      if (reg) {
+        reg.showNotification("Reminder", {
+          body: message,
+        });
+      } else {
+        console.error("Service Worker registration not found");
+      }
+    });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(function(permission) {
       if (permission === "granted") {
-        new Notification("Reminder", { body: message });
+        showNotification(message);
       }
     });
   }
@@ -38,7 +49,7 @@ inputField.addEventListener("keyup", (e) => {
 
   // If enter button is clicked and inputted value length is greater than 0.
   if (e.key === "Enter" && inputVal.length > 0) {
-    let taskDateTime = document.querySelector('#taskDateTime').value; // Added line to get date and time
+    let taskDateTime = taskDateTimeInput.value; // Get date and time from the input
     let liTag = `<li class="list pending" onclick="handleStatus(this)">
       <input type="checkbox" />
       <span class="task">${inputVal}</span>
