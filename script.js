@@ -21,6 +21,26 @@ function allTasks() {
   clearButton.style.pointerEvents = "none";
 }
 
+// Function to show notification
+function showNotification(message) {
+  // Check if the browser supports notifications
+  if (!("Notification" in window)) {
+    console.log("This browser does not support system notifications");
+    return;
+  }
+
+  // Check if permission is granted
+  if (Notification.permission === "granted") {
+    new Notification(message);
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        new Notification(message);
+      }
+    });
+  }
+}
+
 // Add task while we put value in the text area and press enter
 inputField.addEventListener("keyup", (e) => {
   let inputVal = inputField.value.trim(); // Trim function removes space of front and back of the inputted value
@@ -39,14 +59,14 @@ inputField.addEventListener("keyup", (e) => {
     inputField.value = ""; // Removing value from the input field
     allTasks();
 
-    // Set a reminder alert
+    // Set a reminder notification
     const reminderDateTime = new Date(taskDateTime);
     const now = new Date();
     const timeDifference = reminderDateTime - now;
 
     if (timeDifference > 0) {
       setTimeout(() => {
-        alert(`Reminder: ${inputVal}`);
+        showNotification(`Reminder: ${inputVal}`);
       }, timeDifference);
     }
   }
