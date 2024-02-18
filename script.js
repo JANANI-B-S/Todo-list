@@ -23,21 +23,24 @@ function allTasks() {
 
 // Function to show notification
 function showNotification(message) {
-  // Check if the browser supports notifications
-  if (!("Notification" in window)) {
-    console.log("This browser does not support system notifications");
-    return;
-  }
+  if (document.visibilityState !== "visible") {
+    // Show notification only if the document is not visible (e.g., user is on another tab)
+    // Check if the browser supports notifications
+    if (!("Notification" in window)) {
+      console.log("This browser does not support system notifications");
+      return;
+    }
 
-  // Check if permission is granted
-  if (Notification.permission === "granted") {
-    new Notification(message);
-  } else if (Notification.permission !== "denied") {
-    Notification.requestPermission().then((permission) => {
-      if (permission === "granted") {
-        new Notification(message);
-      }
-    });
+    // Check if permission is granted
+    if (Notification.permission === "granted") {
+      new Notification(message);
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification(message);
+        }
+      });
+    }
   }
 }
 
