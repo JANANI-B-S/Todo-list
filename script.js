@@ -1,93 +1,94 @@
-// Getting all required elements
-const inputField = document.querySelector(".input-field textarea"),
-  todoLists = document.querySelector(".todoLists"),
-  pendingNum = document.querySelector(".pending-num"),
-  clearButton = document.querySelector(".clear-button");
+document.addEventListener("DOMContentLoaded", function () {
+  const textarea = document.querySelector('.input-field textarea');
+  const taskDateTimeInput = document.getElementById('taskDateTime');
+  const todoLists = document.querySelector('.todoLists');
+  const clearButton = document.querySelector('.clear-button');
+  const pendingNum = document.querySelector('.pending-num');
 
-// We will call this function while adding, deleting, and checking-unchecking the task
-function allTasks() {
-  let tasks = document.querySelectorAll(".pending");
+  let tasks = [];
 
-  // If tasks' length is 0, then pending num text content will be "no", if not, then pending num value will be task's length
-  pendingNum.textContent = tasks.length === 0 ? "no" : tasks.length;
+  // Function to add a new task
+  function addTask() {
+    const taskText = textarea.value.trim();
+    const taskDateTime = taskDateTimeInput.value;
 
-  let allLists = document.querySelectorAll(".list");
-  if (allLists.length > 0) {
-    todoLists.style.marginTop = "20px";
-    clearButton.style.pointerEvents = "auto";
-    return;
-  }
-  todoLists.style.marginTop = "0px";
-  clearButton.style.pointerEvents = "none";
-}
+    if (taskText === '') return;
 
-// Function to show notification
-function showNotification(message) {
-  // Check if the browser supports notifications
-  if (!("Notification" in window)) {
-    console.log("This browser does not support system notifications");
-    return;
+    const task = { text: taskText, datetime: taskDateTime };
+    tasks.push(task);
+
+    displayTasks();
+    resetInputFields();
   }
 
-  // Check if permission is granted
-  if (Notification.permission === "granted") {
-    new Notification(message);
-  } else if (Notification.permission !== "denied") {
-    Notification.requestPermission().then((permission) => {
-      if (permission === "granted") {
-        new Notification(message);
+  // Function to display tasks in the list
+  function displayTasks() {
+    todoLists.innerHTML = '';
+    tasks.forEach((task, index) => {
+      const listItem = document.createElement('li');
+      listItem.innerHTML = `
+        <span>${task.text} - ${task.datetime}</span>
+        <button onclick="deleteTask(${index})">Delete</button>
+      `;
+      todoLists.appendChild(listItem);
+    });
+
+    updatePendingTasks();
+  }
+
+  // Function to delete a task
+  window.deleteTask = function (index) {
+    tasks.splice(index, 1);
+    displayTasks();
+  };
+
+  // Function to update pending tasks count
+  function updatePendingTasks() {
+    const pendingCount = tasks.length;
+    pendingNum.textContent = pendingCount;
+  }
+
+  // Function to reset input fields after adding a task
+  function resetInputFields() {
+    textarea.value = '';
+    taskDateTimeInput.value = '';
+  }
+
+  // Event listener for adding a task
+  textarea.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+      addTask();
+    }
+  });
+
+  // Event listener for Clear All button
+  clearButton.addEventListener('click', function () {
+    tasks = [];
+    displayTasks();
+  });
+
+  // Check for tasks with set datetime and show notifications
+  setInterval(function () {
+    const now = new Date();
+    tasks.forEach((task) => {
+      const taskDatetime = new Date(task.datetime);
+      if (now >= taskDatetime) {
+        showNotification(task.text);
+        deleteTask(tasks.indexOf(task));
       }
     });
-  }
-}
+  }, 60000); // Check every minute for task notifications
 
-// Add task while we put value in the text area and press enter
-inputField.addEventListener("keyup", (e) => {
-  let inputVal = inputField.value.trim(); // Trim function removes space of front and back of the inputted value
-
-  // If enter button is clicked and inputted value length is greater than 0.
-  if (e.key === "Enter" && inputVal.length > 0) {
-    let taskDateTime = document.querySelector('#taskDateTime').value; // Added line to get date and time
-    let liTag = `<li class="list pending" onclick="handleStatus(this)">
-      <input type="checkbox" />
-      <span class="task">${inputVal}</span>
-      <span class="datetime">${taskDateTime}</span> <!-- Added span for date and time -->
-      <i class="uil uil-trash" onclick="deleteTask(this)"></i>
-    </li>`;
-
-    todoLists.insertAdjacentHTML("beforeend", liTag); // Inserting li tag inside the todoList div
-    inputField.value = ""; // Removing value from the input field
-    allTasks();
-
-    // Set a reminder notification
-    const reminderDateTime = new Date(taskDateTime);
-    const now = new Date();
-    const timeDifference = reminderDateTime - now;
-
-    if (timeDifference > 0) {
-      setTimeout(() => {
-        showNotification(`Reminder: ${inputVal}`);
-      }, timeDifference);
+  // Function to show browser notification
+  function showNotification(taskText) {
+    if ('Notification' in window) {
+      Notification.requestPermission().then(function (permission) {
+        if (permission === 'granted') {
+          new Notification('Todo List Notification', {
+            body: `Time to do: ${taskText}`,
+          });
+        }
+      });
     }
   }
-});
-
-// Checking and unchecking the checkbox while we click on the task
-function handleStatus(e) {
-  const checkbox = e.querySelector("input"); // Getting checkbox
-  checkbox.checked = checkbox.checked ? false : true;
-  e.classList.toggle("pending");
-  allTasks();
-}
-
-// Deleting task while we click on the delete icon.
-function deleteTask(e) {
-  e.parentElement.remove(); // Getting the parent element and removing it
-  allTasks();
-}
-
-// Deleting all the tasks while we click on the clear button.
-clearButton.addEventListener("click", () => {
-  todoLists.innerHTML = "";
-  allTasks();
 });
